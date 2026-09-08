@@ -158,9 +158,9 @@
     --muted-foreground: color-mix(in srgb, var(--color-neutral-500) 90%, var(--color-black));
     --popover: var(--color-white);
     --popover-foreground: var(--color-neutral-800);
-    --primary: var(--color-neutral-800);
-    --primary-foreground: var(--color-neutral-50);
-    --ring: var(--color-neutral-400);
+    --primary: #ff594d;
+    --primary-foreground: var(--color-white);
+    --ring: #ff594d;
     --secondary: --alpha(var(--color-black) / 4%);
     --secondary-foreground: var(--color-neutral-800);
     --chart-1: var(--color-orange-600);
@@ -171,7 +171,7 @@
     --code: var(--color-white);
     --code-foreground: var(--foreground);
     --code-highlight: --alpha(var(--color-black) / 4%);
-    --radius: 0.625rem;
+    --radius: 0.5rem;
     --sidebar: var(--color-neutral-50);
     --sidebar-accent: --alpha(var(--color-black) / 4%);
     --sidebar-accent-foreground: var(--color-neutral-800);
@@ -231,12 +231,27 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground;
     }
   code, kbd, samp, pre {
     font-family: var(--font-mono);
     }
   html {
-    @apply font-sans font-mono;
+    @apply scroll-smooth font-sans;
     }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
