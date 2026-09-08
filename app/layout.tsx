@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Geist_Mono, Inter } from "next/font/google"
+import { Geist_Mono, Inter, Fraunces } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -11,10 +11,12 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
+const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" })
+
 export const metadata: Metadata = {
-  title: "Limitless — Private image converter",
+  title: "OpenReformat | The private free file converter for a more open web",
   description:
-    "Convert images locally in your browser with WebAssembly. No uploads, file limits, or tracking.",
+    "Convert images locally in your browser. No uploads, file limits, or tracking.",
 }
 
 export default function RootLayout({
@@ -30,11 +32,14 @@ export default function RootLayout({
         "antialiased",
         inter.variable,
         interHeading.variable,
-        geistMono.variable
+        geistMono.variable,
+        fraunces.variable
       )}
     >
       <body>
-        <ThemeProvider forcedTheme="light">{children}</ThemeProvider>
+        <ThemeProvider defaultTheme="dark" enableSystem={false}>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

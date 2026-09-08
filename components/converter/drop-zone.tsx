@@ -60,7 +60,7 @@ export function DropZone({ onFiles, compact = false }: DropZoneProps) {
           <EmptyMedia className="border-primary text-primary" variant="icon">
             <FileImageIcon aria-hidden="true" />
           </EmptyMedia>
-          <EmptyTitle>
+          <EmptyTitle className="tracking-tight">
             {compact ? "Add more images" : "Drop images here"}
           </EmptyTitle>
           <EmptyDescription>

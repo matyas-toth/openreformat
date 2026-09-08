@@ -2,12 +2,11 @@
 
 import * as React from "react"
 import { zipSync } from "fflate"
-import { DownloadIcon, LockKeyholeIcon, SparklesIcon } from "lucide-react"
+import { DownloadIcon, SendIcon, SparklesIcon } from "lucide-react"
 
 import { DropZone } from "@/components/converter/drop-zone"
 import { FileRow } from "@/components/converter/file-row"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import {
@@ -24,6 +23,7 @@ import { Slider } from "@/components/ui/slider"
 import { useConverterQueue } from "@/hooks/use-converter-queue"
 import { formatDetails } from "@/lib/converter/formats"
 import { OUTPUT_FORMATS, type OutputFormat } from "@/lib/converter/types"
+import { Card } from "../ui/card"
 
 export function ImageConverter() {
   const {
@@ -87,11 +87,11 @@ export function ImageConverter() {
   }
 
   return (
-    <section
+    <Card
       aria-label="Image converter"
-      className="mt-12 rounded-xl  bg-card p-3  sm:mt-16 sm:p-5"
+      className="mt-12 p-3 sm:mt-16 sm:p-5 bg-neutral-100 dark:bg-card"
       data-agent-surface="image-converter"
-      style={{ "--shadow-color": "var(--border)" } as React.CSSProperties}
+      
     >
       {items.length === 0 ? (
         <DropZone onFiles={handleFiles} />
@@ -120,8 +120,7 @@ export function ImageConverter() {
                       <SelectGroupLabel>Output format</SelectGroupLabel>
                       {OUTPUT_FORMATS.map((option) => (
                         <SelectItem key={option} value={option}>
-                          {formatDetails[option].label} —{" "}
-                          {formatDetails[option].description}
+                          {formatDetails[option].label}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -162,7 +161,7 @@ export function ImageConverter() {
               onClick={convertAll}
               size="xl"
             >
-              <SparklesIcon aria-hidden="true" data-icon="inline-start" />
+              <SendIcon className="mr-1!" aria-hidden="true" data-icon="inline-start" />
               Convert {items.length} {items.length === 1 ? "image" : "images"}
             </Button>
           </div>
@@ -181,7 +180,6 @@ export function ImageConverter() {
               <p className="font-heading text-sm font-medium">
                 {items.length} {items.length === 1 ? "image" : "images"}
               </p>
-             
             </div>
             <div className="flex items-center gap-1">
               {completedItems.length > 1 ? (
@@ -219,6 +217,6 @@ export function ImageConverter() {
           <DropZone compact onFiles={handleFiles} />
         </div>
       )}
-    </section>
+    </Card>
   )
 }
