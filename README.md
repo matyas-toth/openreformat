@@ -1,4 +1,4 @@
-# Limitless
+# OpenReformat
 
 A private, client-only image converter built with Next.js, COSS UI, Tailwind,
 and WebAssembly codecs. Files are decoded and encoded in a Web Worker and never
