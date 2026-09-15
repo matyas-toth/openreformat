@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Geist_Mono, Inter, Fraunces } from "next/font/google"
 
 import "./globals.css"
+import { AppShell } from "@/components/app-shell"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
@@ -16,7 +17,7 @@ const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" })
 export const metadata: Metadata = {
   title: "OpenReformat | The private free file converter for a more open web",
   description:
-    "Convert images locally in your browser. No uploads, file limits, or tracking.",
+    "Convert images and videos locally in your browser. No uploads, file limits, or tracking.",
 }
 
 export default function RootLayout({
@@ -26,6 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
+      data-scroll-behavior="smooth"
       lang="en"
       suppressHydrationWarning
       className={cn(
@@ -38,7 +40,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider defaultTheme="dark" enableSystem={false}>
-          {children}
+          <AppShell>{children}</AppShell>
         </ThemeProvider>
       </body>
     </html>

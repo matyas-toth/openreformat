@@ -4,6 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "sync:ffmpeg": "node scripts/sync-ffmpeg-assets.mjs",
+    "postinstall": "npm run sync:ffmpeg",
+    "predev": "npm run sync:ffmpeg",
+    "prebuild": "npm run sync:ffmpeg",
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
@@ -14,6 +18,8 @@
   "dependencies": {
     "@base-ui/react": "^1.8.0",
     "@daypicker/react": "^10.0.1",
+    "@ffmpeg/core-mt": "^0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
     "@jsquash/avif": "^2.1.1",
     "@jsquash/jpeg": "^1.6.0",
     "@jsquash/png": "^3.1.1",
