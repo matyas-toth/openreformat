@@ -6,6 +6,12 @@ import {
   cancelVideoConversion,
   convertVideoLocally,
 } from "@/lib/video-converter/ffmpeg-client"
+import {
+  clampInteger,
+  customFrameRateBounds,
+  customResolutionBounds,
+  resolveVideoCodec,
+} from "@/lib/video-converter/formats"
 import { videoOutputFormats } from "@/lib/video-converter/types"
 import type {
   AudioCodec,
@@ -44,6 +50,13 @@ const initialSettings: VideoSettings = {
   frameRate: "original",
   quality: "balanced",
   keepAudio: true,
+  customWidth: 1920,
+  customHeight: 1080,
+  keepAspectRatio: true,
+  customFrameRate: 25,
+  customH264Crf: 23,
+  customVp9Crf: 32,
+  customGifColors: 192,
 }
 
 function isSupportedVideo(file: File) {
@@ -99,6 +112,8 @@ export function useVideoConverter() {
   const [outputName, setOutputName] = React.useState<string | null>(null)
   const [outputSize, setOutputSize] = React.useState<number | null>(null)
   const operation = React.useRef(0)
+  const fileSelection = React.useRef(0)
+  const customResolutionTouched = React.useRef(false)
 
   React.useEffect(() => {
     return () => {
@@ -131,24 +146,41 @@ export function useVideoConverter() {
       }
 
       clearOutput()
+      const selectionId = fileSelection.current + 1
+      fileSelection.current = selectionId
       setError(null)
       setProgress(0)
       setStage("")
       setStatus("ready")
       setFile(nextFile)
+      setMetadata(null)
 
       const nextPreviewUrl = URL.createObjectURL(nextFile)
       setPreviewUrl((current) => {
         if (current) URL.revokeObjectURL(current)
         return nextPreviewUrl
       })
-      setMetadata(await readVideoMetadata(nextPreviewUrl))
+      const nextMetadata = await readVideoMetadata(nextPreviewUrl)
+      if (fileSelection.current !== selectionId) return false
+      setMetadata(nextMetadata)
+      if (
+        !customResolutionTouched.current &&
+        nextMetadata.width &&
+        nextMetadata.height
+      ) {
+        setSettings((current) => ({
+          ...current,
+          customWidth: nextMetadata.width as number,
+          customHeight: nextMetadata.height as number,
+        }))
+      }
       return true
     },
     [clearOutput]
   )
 
   const clearFile = React.useCallback(() => {
+    fileSelection.current += 1
     setFile(null)
     setMetadata(null)
     setPreviewUrl((current) => {
@@ -171,6 +203,15 @@ export function useVideoConverter() {
     [clearOutput]
   )
 
+  const updateSettings = React.useCallback(
+    (updater: (current: VideoSettings) => VideoSettings) => {
+      setSettings(updater)
+      clearOutput()
+      setStatus((current) => (current === "done" ? "ready" : current))
+    },
+    [clearOutput]
+  )
+
   const setFormat = React.useCallback(
     (format: VideoOutputFormat) => {
       if (!videoOutputFormats.includes(format)) return
@@ -184,6 +225,126 @@ export function useVideoConverter() {
       setStatus((current) => (current === "done" ? "ready" : current))
     },
     [clearOutput]
+  )
+
+  const setResolution = React.useCallback(
+    (value: VideoResolution) => {
+      updateSettings((current) => ({ ...current, resolution: value }))
+    },
+    [updateSettings]
+  )
+
+  const setCustomWidth = React.useCallback(
+    (value: number) => {
+      if (!Number.isFinite(value)) return
+      customResolutionTouched.current = true
+      updateSettings((current) => {
+        const customWidth = clampInteger(
+          value,
+          customResolutionBounds.min,
+          customResolutionBounds.max
+        )
+        if (!current.keepAspectRatio) return { ...current, customWidth }
+
+        const aspectRatio =
+          metadata?.width && metadata.height
+            ? metadata.width / metadata.height
+            : current.customWidth / current.customHeight
+        return {
+          ...current,
+          customWidth,
+          customHeight: clampInteger(
+            customWidth / aspectRatio,
+            customResolutionBounds.min,
+            customResolutionBounds.max
+          ),
+        }
+      })
+    },
+    [metadata, updateSettings]
+  )
+
+  const setCustomHeight = React.useCallback(
+    (value: number) => {
+      if (!Number.isFinite(value)) return
+      customResolutionTouched.current = true
+      updateSettings((current) => {
+        const customHeight = clampInteger(
+          value,
+          customResolutionBounds.min,
+          customResolutionBounds.max
+        )
+        if (!current.keepAspectRatio) return { ...current, customHeight }
+
+        const aspectRatio =
+          metadata?.width && metadata.height
+            ? metadata.width / metadata.height
+            : current.customWidth / current.customHeight
+        return {
+          ...current,
+          customWidth: clampInteger(
+            customHeight * aspectRatio,
+            customResolutionBounds.min,
+            customResolutionBounds.max
+          ),
+          customHeight,
+        }
+      })
+    },
+    [metadata, updateSettings]
+  )
+
+  const setKeepAspectRatio = React.useCallback(
+    (keepAspectRatio: boolean) => {
+      updateSettings((current) => {
+        if (!keepAspectRatio) return { ...current, keepAspectRatio }
+        const aspectRatio =
+          metadata?.width && metadata.height
+            ? metadata.width / metadata.height
+            : current.customWidth / current.customHeight
+        return {
+          ...current,
+          keepAspectRatio,
+          customHeight: clampInteger(
+            current.customWidth / aspectRatio,
+            customResolutionBounds.min,
+            customResolutionBounds.max
+          ),
+        }
+      })
+    },
+    [metadata, updateSettings]
+  )
+
+  const setCustomFrameRate = React.useCallback(
+    (value: number) => {
+      if (!Number.isFinite(value)) return
+      updateSetting(
+        "customFrameRate",
+        clampInteger(
+          value,
+          customFrameRateBounds.min,
+          customFrameRateBounds.max
+        )
+      )
+    },
+    [updateSetting]
+  )
+
+  const setCustomQuality = React.useCallback(
+    (value: number) => {
+      if (!Number.isFinite(value)) return
+      if (settings.format === "gif") {
+        updateSetting("customGifColors", clampInteger(value, 2, 256))
+        return
+      }
+      if (resolveVideoCodec(settings) === "vp9") {
+        updateSetting("customVp9Crf", clampInteger(value, 0, 63))
+        return
+      }
+      updateSetting("customH264Crf", clampInteger(value, 0, 51))
+    },
+    [settings, updateSetting]
   )
 
   const convert = React.useCallback(async () => {
@@ -259,10 +420,14 @@ export function useVideoConverter() {
     setFormat,
     setVideoCodec: (value: VideoCodec) => updateSetting("videoCodec", value),
     setAudioCodec: (value: AudioCodec) => updateSetting("audioCodec", value),
-    setResolution: (value: VideoResolution) =>
-      updateSetting("resolution", value),
+    setResolution,
+    setCustomWidth,
+    setCustomHeight,
+    setKeepAspectRatio,
     setFrameRate: (value: VideoFrameRate) => updateSetting("frameRate", value),
+    setCustomFrameRate,
     setQuality: (value: VideoQuality) => updateSetting("quality", value),
+    setCustomQuality,
     setKeepAudio: (value: boolean) => updateSetting("keepAudio", value),
   }
 }

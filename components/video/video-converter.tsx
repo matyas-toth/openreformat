@@ -10,6 +10,7 @@ import {
   XIcon,
 } from "@phosphor-icons/react"
 
+import { VideoAdvancedSettings } from "@/components/video/video-advanced-settings"
 import { VideoDropZone } from "@/components/video/video-drop-zone"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -25,82 +26,18 @@ import { Progress } from "@/components/ui/progress"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
 import { useVideoConverter } from "@/hooks/use-video-converter"
 import { formatBytes } from "@/lib/converter/formats"
-import {
-  audioCodecOptions,
-  frameRateOptions,
-  qualityOptions,
-  resolutionOptions,
-  videoCodecOptions,
-  videoFormatDetails,
-} from "@/lib/video-converter/formats"
+import { videoFormatDetails } from "@/lib/video-converter/formats"
 import { videoOutputFormats } from "@/lib/video-converter/types"
-import type {
-  AudioCodec,
-  VideoCodec,
-  VideoFrameRate,
-  VideoOutputFormat,
-  VideoQuality,
-  VideoResolution,
-} from "@/lib/video-converter/types"
+import type { VideoOutputFormat } from "@/lib/video-converter/types"
 import { cn } from "@/lib/utils"
-
-interface Option {
-  value: string
-  label: string
-}
-
-interface SettingsSelectProps {
-  label: string
-  value: string
-  options: Option[]
-  disabled?: boolean
-  onValueChange: (value: string) => void
-}
-
-function SettingsSelect({
-  label,
-  value,
-  options,
-  disabled,
-  onValueChange,
-}: SettingsSelectProps) {
-  return (
-    <Field>
-      <FieldLabel>{label}</FieldLabel>
-      <Select
-        disabled={disabled}
-        onValueChange={(nextValue) => {
-          if (nextValue) onValueChange(nextValue)
-        }}
-        value={value}
-      >
-        <SelectTrigger aria-label={label}>
-          <SelectValue>
-            {(selected: string | null) =>
-              options.find((option) => option.value === selected)?.label ??
-              "Choose"
-            }
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </Field>
-  )
-}
 
 function formatDuration(duration: number | null | undefined) {
   if (!duration) return null
@@ -134,13 +71,17 @@ export function VideoConverter() {
     setVideoCodec,
     setAudioCodec,
     setResolution,
+    setCustomWidth,
+    setCustomHeight,
+    setKeepAspectRatio,
     setFrameRate,
+    setCustomFrameRate,
     setQuality,
+    setCustomQuality,
     setKeepAudio,
   } = useVideoConverter()
   const [advancedOpen, setAdvancedOpen] = React.useState(false)
   const isWorking = status === "loading" || status === "converting"
-  const isGif = settings.format === "gif"
   const details = [
     metadata?.width && metadata.height
       ? `${metadata.width} × ${metadata.height}`
@@ -276,16 +217,18 @@ export function VideoConverter() {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {videoOutputFormats.map((format) => (
-                  <SelectItem
-                    data-agent-option={format}
-                    key={format}
-                    value={format}
-                  >
-                    {videoFormatDetails[format].label} -{" "}
-                    {videoFormatDetails[format].description}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  {videoOutputFormats.map((format) => (
+                    <SelectItem
+                      data-agent-option={format}
+                      key={format}
+                      value={format}
+                    >
+                      {videoFormatDetails[format].label} -{" "}
+                      {videoFormatDetails[format].description}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
             <FieldDescription>
@@ -354,56 +297,22 @@ export function VideoConverter() {
             />
           </Button>
           <CollapsiblePanel>
-            <div
-              className="grid gap-5 border-t px-1 pt-5 pb-2 sm:grid-cols-2 sm:px-2 lg:grid-cols-3"
-              data-agent-surface="video-advanced-settings"
-            >
-              <SettingsSelect
-                disabled={isGif}
-                label="Video codec"
-                onValueChange={(value) => setVideoCodec(value as VideoCodec)}
-                options={videoCodecOptions[settings.format]}
-                value={settings.videoCodec}
-              />
-              <SettingsSelect
-                label="Resolution"
-                onValueChange={(value) =>
-                  setResolution(value as VideoResolution)
-                }
-                options={resolutionOptions}
-                value={settings.resolution}
-              />
-              <SettingsSelect
-                label="Frame rate"
-                onValueChange={(value) => setFrameRate(value as VideoFrameRate)}
-                options={frameRateOptions}
-                value={settings.frameRate}
-              />
-              <SettingsSelect
-                label="Quality"
-                onValueChange={(value) => setQuality(value as VideoQuality)}
-                options={qualityOptions}
-                value={settings.quality}
-              />
-              <SettingsSelect
-                disabled={isGif || !settings.keepAudio}
-                label="Audio codec"
-                onValueChange={(value) => setAudioCodec(value as AudioCodec)}
-                options={audioCodecOptions[settings.format]}
-                value={settings.audioCodec}
-              />
-              <Field className="justify-end">
-                <div className="flex min-h-8 w-full items-center justify-between gap-4 rounded-lg border border-input bg-input/16 px-3">
-                  <FieldLabel htmlFor="keep-video-audio">Keep audio</FieldLabel>
-                  <Switch
-                    checked={!isGif && settings.keepAudio}
-                    disabled={isGif}
-                    id="keep-video-audio"
-                    onCheckedChange={setKeepAudio}
-                  />
-                </div>
-              </Field>
-            </div>
+            <Separator />
+            <VideoAdvancedSettings
+              disabled={isWorking}
+              setAudioCodec={setAudioCodec}
+              setCustomFrameRate={setCustomFrameRate}
+              setCustomHeight={setCustomHeight}
+              setCustomQuality={setCustomQuality}
+              setCustomWidth={setCustomWidth}
+              setFrameRate={setFrameRate}
+              setKeepAspectRatio={setKeepAspectRatio}
+              setKeepAudio={setKeepAudio}
+              setQuality={setQuality}
+              setResolution={setResolution}
+              setVideoCodec={setVideoCodec}
+              settings={settings}
+            />
           </CollapsiblePanel>
         </Collapsible>
       </CardPanel>
