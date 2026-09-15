@@ -10,7 +10,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowUpRightStackIcon, Image02Icon } from "@hugeicons/core-free-icons"
+import {
+  ArrowUpRightStackIcon,
+  Edit01Icon,
+  Image02Icon,
+} from "@hugeicons/core-free-icons"
 import { Video02Icon } from "@hugeicons/core-free-icons"
 
 import {
@@ -119,8 +123,8 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="gap-3 p-4">
-        <div className="flex items-center gap-2 text-xs leading-5 text-sidebar-foreground">
-          <LockSimpleIcon aria-hidden="true" className="mt-0.5 shrink-0" />
+        <div className="flex items-center gap-2 text-sm leading-5 text-sidebar-foreground">
+          <HugeiconsIcon icon={Edit01Icon} />
           <p>
             made by{" "}
             <Link
