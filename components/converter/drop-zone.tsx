@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { FileImageIcon } from "lucide-react"
+import { ImagesSquareIcon, UploadSimpleIcon } from "@phosphor-icons/react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -58,7 +58,7 @@ export function DropZone({ onFiles, compact = false }: DropZoneProps) {
       <Empty className={cn(compact ? "py-8 md:py-8" : "min-h-96 py-14")}>
         <EmptyHeader>
           <EmptyMedia className="border-primary text-primary" variant="icon">
-            <FileImageIcon aria-hidden="true" />
+            <ImagesSquareIcon aria-hidden="true" weight="fill" />
           </EmptyMedia>
           <EmptyTitle className="tracking-tight">
             {compact ? "Add more images" : "Drop images here"}
@@ -88,13 +88,18 @@ export function DropZone({ onFiles, compact = false }: DropZoneProps) {
             onClick={() => inputRef.current?.click()}
             size="xl"
           >
+            <UploadSimpleIcon
+              aria-hidden="true"
+              data-icon="inline-start"
+              weight="bold"
+            />
             Choose images
           </Button>
           <p
             className="font-mono text-[10px] tracking-[0.08em] text-muted-foreground sm:text-xs"
             id="supported-formats"
           >
-            PNG · JPEG · WEBP · AVIF · GIF · BMP
+            PNG · JPEG · WEBP · AVIF · GIF · BMP · TIFF · ICO · SVG · TGA · QOI
           </p>
         </EmptyContent>
       </Empty>

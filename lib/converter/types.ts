@@ -1,4 +1,15 @@
-export const OUTPUT_FORMATS = ["png", "jpeg", "webp", "avif"] as const
+export const OUTPUT_FORMATS = [
+  "png",
+  "jpeg",
+  "webp",
+  "avif",
+  "gif",
+  "bmp",
+  "tiff",
+  "ico",
+  "tga",
+  "qoi",
+] as const
 
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number]
 

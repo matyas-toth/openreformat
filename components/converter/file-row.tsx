@@ -1,11 +1,18 @@
 "use client"
 
-import { CheckIcon, DownloadIcon, RotateCcwIcon, XIcon } from "lucide-react"
+import {
+  ArrowCounterClockwiseIcon,
+  CheckIcon,
+  DownloadSimpleIcon,
+  ImagesSquareIcon,
+  XIcon,
+} from "@phosphor-icons/react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyMedia } from "@/components/ui/empty"
 import { Progress } from "@/components/ui/progress"
-import { formatBytes } from "@/lib/converter/formats"
+import { canPreviewImage, formatBytes } from "@/lib/converter/formats"
 import type { QueueItem } from "@/lib/converter/types"
 
 interface FileRowProps {
@@ -20,13 +27,23 @@ export function FileRow({ item, disabled, onRemove }: FileRowProps) {
 
   return (
     <li className="grid min-w-0 grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 py-4 sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:gap-4">
-      {/* A native image is content, while all interactive UI uses COSS. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        alt=""
-        className="size-14 rounded-md border bg-muted object-cover sm:size-16"
-        src={item.previewUrl}
-      />
+      {canPreviewImage(item.file) ? (
+        // A native image is content, while all interactive UI uses COSS.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          alt=""
+          className="size-14 rounded-md border bg-muted object-cover sm:size-16"
+          src={item.previewUrl}
+        />
+      ) : (
+        <EmptyMedia
+          aria-hidden="true"
+          className="m-0 size-14 sm:size-16 [&>div]:size-14 sm:[&>div]:size-16"
+          variant="icon"
+        >
+          <ImagesSquareIcon weight="fill" />
+        </EmptyMedia>
+      )}
       <div className="flex min-w-0 flex-col gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <p className="truncate font-heading text-sm font-medium">
@@ -34,7 +51,7 @@ export function FileRow({ item, disabled, onRemove }: FileRowProps) {
           </p>
           {item.status === "done" ? (
             <Badge size="sm" variant="success">
-              <CheckIcon aria-hidden="true" />
+              <CheckIcon aria-hidden="true" weight="bold" />
               Ready
             </Badge>
           ) : null}
@@ -67,13 +84,14 @@ export function FileRow({ item, disabled, onRemove }: FileRowProps) {
             size="icon"
             variant="outline"
           >
-            <DownloadIcon aria-hidden="true" />
+            <DownloadSimpleIcon aria-hidden="true" weight="bold" />
           </Button>
         ) : null}
         {item.status === "error" ? (
-          <RotateCcwIcon
+          <ArrowCounterClockwiseIcon
             aria-hidden="true"
             className="size-4 text-muted-foreground"
+            weight="bold"
           />
         ) : null}
         <Button
@@ -83,7 +101,7 @@ export function FileRow({ item, disabled, onRemove }: FileRowProps) {
           size="icon"
           variant="ghost"
         >
-          <XIcon aria-hidden="true" />
+          <XIcon aria-hidden="true" weight="bold" />
         </Button>
       </div>
     </li>

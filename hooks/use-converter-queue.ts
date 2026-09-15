@@ -2,19 +2,20 @@
 
 import * as React from "react"
 
-import { formatDetails, outputName } from "@/lib/converter/formats"
+import {
+  formatDetails,
+  isSupportedImage,
+  outputName,
+} from "@/lib/converter/formats"
+import {
+  ConverterWorkerPool,
+  recommendedWorkerCount,
+} from "@/lib/converter/worker-pool"
 import type {
   OutputFormat,
   QueueItem,
   WorkerRequest,
-  WorkerResponse,
 } from "@/lib/converter/types"
-
-interface PendingConversion {
-  resolve: (buffer: ArrayBuffer) => void
-  reject: (error: Error) => void
-  onProgress: (progress: number) => void
-}
 
 function makeId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
@@ -41,54 +42,24 @@ export function useConverterQueue() {
   const [format, setFormat] = React.useState<OutputFormat>("webp")
   const [quality, setQuality] = React.useState(82)
   const [isConverting, setIsConverting] = React.useState(false)
-  const workerRef = React.useRef<Worker | null>(null)
-  const pendingRef = React.useRef(new Map<string, PendingConversion>())
+  const workerPoolRef = React.useRef<ConverterWorkerPool | null>(null)
   const itemsRef = React.useRef(items)
   itemsRef.current = items
 
-  const getWorker = React.useCallback(() => {
-    if (workerRef.current) return workerRef.current
-
-    const worker = new Worker(
-      new URL("../workers/image-converter.worker.ts", import.meta.url),
-      { type: "module" }
-    )
-
-    worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-      const message = event.data
-      const pending = pendingRef.current.get(message.id)
-      if (!pending) return
-
-      if (message.type === "progress") {
-        pending.onProgress(message.progress)
-        return
-      }
-
-      pendingRef.current.delete(message.id)
-      if (message.type === "success") pending.resolve(message.buffer)
-      else pending.reject(new Error(message.message))
-    }
-
-    worker.onerror = () => {
-      for (const pending of pendingRef.current.values()) {
-        pending.reject(new Error("The conversion worker stopped unexpectedly."))
-      }
-      pendingRef.current.clear()
-    }
-
-    workerRef.current = worker
-    return worker
+  const getWorkerPool = React.useCallback(() => {
+    workerPoolRef.current ??= new ConverterWorkerPool(recommendedWorkerCount())
+    return workerPoolRef.current
   }, [])
 
   React.useEffect(() => {
     return () => {
-      workerRef.current?.terminate()
+      workerPoolRef.current?.terminate()
       for (const item of itemsRef.current) revokeItemUrls(item)
     }
   }, [])
 
   const addFiles = React.useCallback(async (files: File[]) => {
-    const imageFiles = files.filter((file) => file.type.startsWith("image/"))
+    const imageFiles = files.filter(isSupportedImage)
     if (!imageFiles.length) return 0
 
     const additions = await Promise.all(
@@ -126,11 +97,8 @@ export function useConverterQueue() {
 
   const convertOne = React.useCallback(
     (request: WorkerRequest, onProgress: (progress: number) => void) =>
-      new Promise<ArrayBuffer>((resolve, reject) => {
-        pendingRef.current.set(request.id, { resolve, reject, onProgress })
-        getWorker().postMessage(request, [request.buffer])
-      }),
-    [getWorker]
+      getWorkerPool().run(request, onProgress),
+    [getWorkerPool]
   )
 
   const convertAll = React.useCallback(async () => {
@@ -141,71 +109,78 @@ export function useConverterQueue() {
       (item) => item.status !== "converting"
     )
 
-    for (const item of queue) {
-      setItems((current) =>
-        current.map((entry) =>
-          entry.id === item.id
-            ? { ...entry, status: "converting", progress: 4, error: undefined }
-            : entry
-        )
-      )
-
-      try {
-        const sourceBuffer = await item.file.arrayBuffer()
-        const converted = await convertOne(
-          {
-            id: item.id,
-            buffer: sourceBuffer,
-            fileName: item.file.name,
-            mimeType: item.file.type,
-            format,
-            quality,
-          },
-          (progress) => {
-            setItems((current) =>
-              current.map((entry) =>
-                entry.id === item.id ? { ...entry, progress } : entry
-              )
-            )
-          }
-        )
-        const blob = new Blob([converted], {
-          type: formatDetails[format].mimeType,
-        })
-        const url = URL.createObjectURL(blob)
-
-        setItems((current) =>
-          current.map((entry) => {
-            if (entry.id !== item.id) return entry
-            if (entry.outputUrl) URL.revokeObjectURL(entry.outputUrl)
-            return {
-              ...entry,
-              status: "done",
-              progress: 100,
-              outputUrl: url,
-              outputSize: blob.size,
-              outputName: outputName(entry.file.name, format),
-            }
-          })
-        )
-      } catch (error) {
+    await Promise.all(
+      queue.map(async (item) => {
         setItems((current) =>
           current.map((entry) =>
             entry.id === item.id
               ? {
                   ...entry,
-                  status: "error",
-                  progress: 0,
-                  error:
-                    error instanceof Error
-                      ? error.message
-                      : "The image could not be converted.",
+                  status: "converting",
+                  progress: 4,
+                  error: undefined,
                 }
               : entry
           )
         )
-      }
-    }
+
+        try {
+          const sourceBuffer = await item.file.arrayBuffer()
+          const converted = await convertOne(
+            {
+              id: item.id,
+              buffer: sourceBuffer,
+              fileName: item.file.name,
+              mimeType: item.file.type,
+              format,
+              quality,
+            },
+            (progress) => {
+              setItems((current) =>
+                current.map((entry) =>
+                  entry.id === item.id ? { ...entry, progress } : entry
+                )
+              )
+            }
+          )
+          const blob = new Blob([converted], {
+            type: formatDetails[format].mimeType,
+          })
+          const url = URL.createObjectURL(blob)
+
+          setItems((current) =>
+            current.map((entry) => {
+              if (entry.id !== item.id) return entry
+              if (entry.outputUrl) URL.revokeObjectURL(entry.outputUrl)
+              return {
+                ...entry,
+                status: "done",
+                progress: 100,
+                outputUrl: url,
+                outputSize: blob.size,
+                outputName: outputName(entry.file.name, format),
+              }
+            })
+          )
+        } catch (error) {
+          setItems((current) =>
+            current.map((entry) =>
+              entry.id === item.id
+                ? {
+                    ...entry,
+                    status: "error",
+                    progress: 0,
+                    error:
+                      error instanceof Error
+                        ? error.message
+                        : "The image could not be converted.",
+                  }
+                : entry
+            )
+          )
+        }
+      })
+    )
 
     setIsConverting(false)
   }, [convertOne, format, isConverting, quality])
