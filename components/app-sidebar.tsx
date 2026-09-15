@@ -9,6 +9,10 @@ import {
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ArrowUpRightStackIcon, Image02Icon } from "@hugeicons/core-free-icons"
+import { Video02Icon } from "@hugeicons/core-free-icons"
+
 import {
   Sidebar,
   SidebarContent,
@@ -31,14 +35,15 @@ export function Brand({ compact = false }: { compact?: boolean }) {
       aria-label="OpenReformat home"
       className={cn(
         "flex min-w-0 items-center gap-2.5 font-heading font-semibold text-foreground",
-        compact ? "text-sm" : "px-2 py-1.5 text-base"
+        compact ? "text-sm" : "px-0 py-1.5 text-base"
       )}
       href="/"
     >
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <ArrowsLeftRightIcon aria-hidden="true" weight="bold" />
-      </span>
-      <span className="truncate text-xl font-normal tracking-tight">
+      <div className="rounded-lg bg-primary p-0.5 pb-1 pl-1 text-white shadow-[inset_0_2px_0_#ffffff11]">
+        <HugeiconsIcon icon={ArrowUpRightStackIcon} />
+      </div>
+
+      <span className="truncate text-2xl font-normal tracking-tight">
         OpenReformat
       </span>
     </Link>
@@ -53,13 +58,13 @@ export function AppSidebar() {
       href: "/",
       label: "Image converter",
       agentName: "image-converter",
-      icon: ImagesSquareIcon,
+      icon: Image02Icon,
     },
     {
       href: "/video",
       label: "Video converter",
       agentName: "video-converter",
-      icon: VideoCameraIcon,
+      icon: Video02Icon,
     },
   ]
 
@@ -93,11 +98,17 @@ export function AppSidebar() {
                           onClick={() => setOpenMobile(false)}
                         />
                       }
-                      size="lg"
+                      size="default"
                       tooltip={tool.label}
                     >
-                      <Icon aria-hidden="true" weight="fill" />
-                      <span>{tool.label}</span>
+                      <HugeiconsIcon
+                        size={24}
+
+                        strokeWidth={2}
+                        icon={Icon}
+                        aria-hidden="true"
+                      />
+                      <span className="">{tool.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
