@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" })
 
 export const metadata: Metadata = {
-  title: "OpenReformat | The private free file converter for a more open web",
+  title: "OpenReformat | The secure and private free file converter for a more open web",
   description:
     "Convert images and videos locally in your browser. No uploads, file limits, or tracking.",
 }

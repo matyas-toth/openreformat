@@ -4,9 +4,9 @@ import { ToolPage } from "@/components/tool-page"
 import { VideoConverter } from "@/components/video/video-converter"
 
 export const metadata: Metadata = {
-  title: "Video converter | OpenReformat",
+  title: "Secure and private video converter | OpenReformat",
   description:
-    "Convert videos locally in your browser with WebAssembly. No uploads or file limits.",
+    "Convert videos locally in your browser with the power of WebAssembly. No uploads or file limits.",
 }
 
 export default function VideoPage() {
